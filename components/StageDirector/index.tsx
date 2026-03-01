@@ -85,6 +85,7 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
     value: string;
     shotId?: string;
     frameType?: 'start' | 'end';
+    aiInstruction?: string;
   } | null>(null);
 
   const activeShotIndex = project.shots.findIndex(s => s.id === activeShotId);
@@ -1045,10 +1046,16 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
       const planningDuration = Number(project.scriptData?.planningShotDuration) || modelDuration;
       const targetDurationSeconds = Math.max(1, Number(activeShot.interval?.duration) || planningDuration);
       
+      const aiInstruction =
+        editModal && editModal.type === 'action'
+          ? editModal.aiInstruction?.trim()
+          : undefined;
+
       const suggestion = await generateActionSuggestion(
         startPrompt,
         endPrompt,
         cameraMovement,
+        aiInstruction,
         undefined,
         targetDurationSeconds
       );
@@ -1816,7 +1823,13 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
             onPrevious={() => setActiveShotId(project.shots[activeShotIndex - 1].id)}
             onNext={() => setActiveShotId(project.shots[activeShotIndex + 1].id)}
             onAIReassessQuality={handleAIReassessQuality}
-            onEditActionSummary={() => setEditModal({ type: 'action', value: activeShot.actionSummary })}
+            onEditActionSummary={() =>
+              setEditModal({
+                type: 'action',
+                value: activeShot.actionSummary,
+                aiInstruction: '',
+              })
+            }
             onEditDialogue={() => setEditModal({ type: 'dialogue', value: activeShot.dialogue || '' })}
             onGenerateAIAction={handleGenerateAIAction}
             onSplitShot={() => handleSplitShot(activeShot)}
@@ -2005,6 +2018,10 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
         showAIGenerate={editModal?.type === 'action'}
         onAIGenerate={handleGenerateAIAction}
         isAIGenerating={isAIGenerating}
+        aiInstruction={editModal?.type === 'action' ? (editModal.aiInstruction || '') : ''}
+        onAIInstructionChange={(aiInstruction) =>
+          setEditModal(editModal ? { ...editModal, aiInstruction } : null)
+        }
       />
 
       {/* Image Preview Modal */}

@@ -11,10 +11,12 @@ interface EditModalProps {
   onChange: (value: string) => void;
   placeholder?: string;
   textareaClassName?: string;
-  // AI生成功能相关
   showAIGenerate?: boolean;
   onAIGenerate?: () => Promise<void>;
   isAIGenerating?: boolean;
+  aiInstruction?: string;
+  onAIInstructionChange?: (value: string) => void;
+  aiInstructionPlaceholder?: string;
 }
 
 const EditModal: React.FC<EditModalProps> = ({
@@ -29,7 +31,10 @@ const EditModal: React.FC<EditModalProps> = ({
   textareaClassName = 'font-normal',
   showAIGenerate = false,
   onAIGenerate,
-  isAIGenerating = false
+  isAIGenerating = false,
+  aiInstruction = '',
+  onAIInstructionChange,
+  aiInstructionPlaceholder = '可选：输入你希望 AI 调整或强化的要求（如节奏、情绪、动作重点）',
 }) => {
   if (!isOpen) return null;
 
@@ -40,11 +45,11 @@ const EditModal: React.FC<EditModalProps> = ({
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 bg-[var(--overlay-heavy)] backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-[var(--bg-elevated)] border border-[var(--border-secondary)] rounded-xl p-6 max-w-2xl w-full space-y-4 shadow-2xl animate-in fade-in duration-200"
         onClick={(e) => e.stopPropagation()}
       >
@@ -53,38 +58,55 @@ const EditModal: React.FC<EditModalProps> = ({
             {icon || <Edit2 className="w-4 h-4 text-[var(--accent-text)]" />}
             {title}
           </h3>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 hover:bg-[var(--bg-hover)] rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
-        
-        {/* AI生成按钮 */}
+
         {showAIGenerate && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleAIGenerate}
-              disabled={isAIGenerating}
-              className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                isAIGenerating
-                  ? 'bg-[var(--border-secondary)] text-[var(--text-tertiary)] cursor-not-allowed'
-                  : 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] hover:bg-[var(--btn-primary-hover)] shadow-lg'
-              }`}
-            >
-              {isAIGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  AI正在生成动作建议...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  AI生成动作建议
-                </>
-              )}
-            </button>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAIGenerate}
+                disabled={isAIGenerating}
+                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  isAIGenerating
+                    ? 'bg-[var(--border-secondary)] text-[var(--text-tertiary)] cursor-not-allowed'
+                    : 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] hover:bg-[var(--btn-primary-hover)] shadow-lg'
+                }`}
+              >
+                {isAIGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    AI 正在生成动作建议...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    AI 生成动作建议
+                  </>
+                )}
+              </button>
+            </div>
+
+            {onAIInstructionChange && (
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-[var(--text-secondary)]">
+                  用户修改要求（可选）
+                </label>
+                <input
+                  type="text"
+                  value={aiInstruction}
+                  onChange={(e) => onAIInstructionChange(e.target.value)}
+                  placeholder={aiInstructionPlaceholder}
+                  disabled={isAIGenerating}
+                  className="w-full bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-secondary)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-primary)] transition-colors disabled:opacity-50"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -96,7 +118,7 @@ const EditModal: React.FC<EditModalProps> = ({
           autoFocus
           disabled={isAIGenerating}
         />
-        
+
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}

@@ -450,12 +450,22 @@ export const generateActionSuggestion = async (
   startFramePrompt: string,
   endFramePrompt: string,
   cameraMovement: string,
+  userInstruction?: string,
   model: string = 'gpt-5.2',
   targetDurationSeconds: number = 8
 ): Promise<string> => {
   console.log('🎬 generateActionSuggestion 调用 - 使用模型:', model);
   const startTime = Date.now();
   const normalizedDuration = Math.max(2, Math.min(20, Math.round(targetDurationSeconds * 10) / 10));
+  const normalizedUserInstruction = userInstruction?.trim();
+  const userInstructionBlock = normalizedUserInstruction
+    ? `
+## User Revision Requirement
+${normalizedUserInstruction}
+
+Please prioritize this requirement while still following all duration and single-shot constraints.
+`
+    : '';
 
   const actionReferenceExamples = `
 ## 单镜头高质量参考（结构参考，不要照抄）
@@ -481,6 +491,7 @@ export const generateActionSuggestion = async (
 **尾帧描述：** ${endFramePrompt}
 **镜头运动：** ${cameraMovement}
 
+${userInstructionBlock}
 ${actionReferenceExamples}
 
 ## 任务要求
