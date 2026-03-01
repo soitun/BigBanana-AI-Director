@@ -94,7 +94,10 @@ export {
   splitShotIntoSubShots,
   enhanceKeyframePrompt,
   generateNineGridPanels,
+  translateNineGridPanels,
+  reviseNineGridPanelsByInstruction,
   generateNineGridImage,
+  type NineGridRewriteContext,
 } from './shotService';
 
 // Prompt compression service

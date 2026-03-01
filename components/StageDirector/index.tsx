@@ -11,7 +11,7 @@ import {
   StoryboardGridPanelCount,
   DubbingMode,
 } from '../../types';
-import { generateImage, generateVideo, generateActionSuggestion, optimizeKeyframePrompt, optimizeBothKeyframes, enhanceKeyframePrompt, splitShotIntoSubShots, generateNineGridPanels, generateNineGridImage, getNegativePrompt, compressPromptWithLLM, generateDubbingAudio } from '../../services/aiService';
+import { generateImage, generateVideo, generateActionSuggestion, optimizeKeyframePrompt, optimizeBothKeyframes, enhanceKeyframePrompt, splitShotIntoSubShots, generateNineGridPanels, translateNineGridPanels, reviseNineGridPanelsByInstruction, generateNineGridImage, getNegativePrompt, compressPromptWithLLM, generateDubbingAudio } from '../../services/aiService';
 import { 
   getRefImagesForShot, 
   getPropsInfoForShot,
@@ -65,6 +65,8 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
   const [isAIReassessing, setIsAIReassessing] = useState(false);
   const [useAIEnhancement, setUseAIEnhancement] = useState(false); // 是否使用AI增强提示词
   const [isSplittingShot, setIsSplittingShot] = useState(false); // 是否正在拆分镜头
+  const [isNineGridTranslating, setIsNineGridTranslating] = useState(false); // 是否正在翻译九宫格描述
+  const [isNineGridRevising, setIsNineGridRevising] = useState(false); // 是否正在按指令改写九宫格描述
   const [showNineGrid, setShowNineGrid] = useState(false); // 是否显示九宫格预览弹窗
   const [toastMessage, setToastMessage] = useState('');
   
@@ -1490,7 +1492,15 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
     updateShot(activeShot.id, (s) => {
       if (!s.nineGrid) return s;
       const newPanels = [...s.nineGrid.panels];
-      newPanels[index] = { ...newPanels[index], ...updatedPanel };
+      const nextPanel: NineGridPanel = { ...newPanels[index], ...updatedPanel };
+      if (
+        typeof updatedPanel.description === 'string' &&
+        updatedPanel.description.trim() !== String(newPanels[index]?.description || '').trim() &&
+        updatedPanel.descriptionZh === undefined
+      ) {
+        nextPanel.descriptionZh = undefined;
+      }
+      newPanels[index] = nextPanel;
       return {
         ...s,
         nineGrid: {
@@ -1499,6 +1509,100 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
         }
       };
     });
+  };
+
+  /**
+   * 九宫格分镜预览 - 英文描述翻译为中文展示（不替换英文原文）
+   */
+  const handleTranslateNineGridPanels = async () => {
+    if (!activeShot?.nineGrid?.panels?.length) return;
+    const model = project.shotGenerationModel || 'gpt-5.2';
+    setIsNineGridTranslating(true);
+    try {
+      const translations = await translateNineGridPanels(activeShot.nineGrid.panels, model);
+      const translationMap = new Map<number, string>(
+        translations.map((item) => [item.index, item.descriptionZh])
+      );
+
+      updateShot(activeShot.id, (s) => {
+        if (!s.nineGrid) return s;
+        return {
+          ...s,
+          nineGrid: {
+            ...s.nineGrid,
+            panels: s.nineGrid.panels.map((panel) => ({
+              ...panel,
+              descriptionZh: translationMap.get(panel.index) || panel.descriptionZh,
+            })),
+          },
+        };
+      });
+
+      showAlert('已生成中文翻译展示，可切换查看。', { type: 'success' });
+    } catch (e: any) {
+      console.error('九宫格翻译失败:', e);
+      if (onApiKeyError && onApiKeyError(e)) return;
+      showAlert(`翻译失败: ${formatUserFriendlyError(e, '翻译失败，请稍后重试。')}`, { type: 'error' });
+    } finally {
+      setIsNineGridTranslating(false);
+    }
+  };
+
+  /**
+   * 九宫格分镜预览 - 按用户要求 AI 改写分镜文案
+   */
+  const handleReviseNineGridPanels = async (instruction: string) => {
+    if (!activeShot?.nineGrid?.panels?.length) return;
+    const normalizedInstruction = String(instruction || '').trim();
+    if (!normalizedInstruction) {
+      showAlert('请输入改写要求后再执行 AI 修改。', { type: 'warning' });
+      return;
+    }
+
+    const model = project.shotGenerationModel || 'gpt-5.2';
+    const scene = project.scriptData?.scenes.find(s => String(s.id) === String(activeShot.sceneId));
+    const visualStyle = project.visualStyle || project.scriptData?.visualStyle || 'live-action';
+
+    setIsNineGridRevising(true);
+    try {
+      const revisedPanels = await reviseNineGridPanelsByInstruction(
+        activeShot.nineGrid.panels,
+        normalizedInstruction,
+        {
+          actionSummary: activeShot.actionSummary,
+          cameraMovement: activeShot.cameraMovement,
+          visualStyle,
+          sceneInfo: scene
+            ? {
+                location: scene.location,
+                time: scene.time,
+                atmosphere: scene.atmosphere,
+              }
+            : undefined,
+        },
+        model
+      );
+
+      updateShot(activeShot.id, (s) => {
+        if (!s.nineGrid) return s;
+        return {
+          ...s,
+          nineGrid: {
+            ...s.nineGrid,
+            panels: revisedPanels.map((panel) => ({ ...panel, descriptionZh: undefined })),
+            status: 'panels_ready',
+          },
+        };
+      });
+
+      showAlert('AI 已按你的要求改写九宫格文案，请复核后生成图片。', { type: 'success' });
+    } catch (e: any) {
+      console.error('九宫格改写失败:', e);
+      if (onApiKeyError && onApiKeyError(e)) return;
+      showAlert(`AI修改失败: ${formatUserFriendlyError(e, '改写失败，请稍后重试。')}`, { type: 'error' });
+    } finally {
+      setIsNineGridRevising(false);
+    }
   };
 
   /**
@@ -1858,6 +1962,10 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
           onRegenerateImage={handleRegenerateNineGridImage}
           onConfirmPanels={(panels) => handleConfirmNineGridPanels(activeShot.id, panels)}
           onUpdatePanel={handleUpdateNineGridPanel}
+          onTranslatePanels={handleTranslateNineGridPanels}
+          onRevisePanels={handleReviseNineGridPanels}
+          isTranslatingPanels={isNineGridTranslating}
+          isRevisingPanels={isNineGridRevising}
           aspectRatio={keyframeAspectRatio}
         />
       )}

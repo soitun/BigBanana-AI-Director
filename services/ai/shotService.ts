@@ -35,6 +35,121 @@ const countEnglishWords = (text: string): number => {
   return matches ? matches.length : 0;
 };
 
+const parseAndValidateNineGridPanels = (
+  responseText: string,
+  expectedPanelCount: number
+): NineGridPanel[] => {
+  const cleaned = cleanJsonString(responseText);
+  const parsed = JSON.parse(cleaned);
+  const rawPanels = Array.isArray(parsed?.panels) ? parsed.panels : [];
+
+  if (rawPanels.length !== expectedPanelCount) {
+    throw new Error(`AI返回的panel数量为 ${rawPanels.length}，必须为 ${expectedPanelCount}`);
+  }
+
+  const usedIndexes = new Set<number>();
+  const normalizedPanels = rawPanels.map((p: any) => {
+    const rawIndex = Number(p?.index);
+    if (!Number.isInteger(rawIndex)) {
+      throw new Error('panel.index 必须为整数');
+    }
+    if (rawIndex < 0 || rawIndex >= expectedPanelCount) {
+      throw new Error(`panel.index 超出范围（当前 ${rawIndex}，要求 0-${expectedPanelCount - 1}）`);
+    }
+    if (usedIndexes.has(rawIndex)) {
+      throw new Error(`panel.index 重复（index=${rawIndex}）`);
+    }
+    usedIndexes.add(rawIndex);
+
+    return {
+      index: rawIndex,
+      shotSize: String(p?.shotSize || '').trim(),
+      cameraAngle: String(p?.cameraAngle || '').trim(),
+      description: String(p?.description || '').trim(),
+    };
+  });
+
+  const orderedPanels = [...normalizedPanels].sort((a, b) => a.index - b.index);
+  const missingIndex = orderedPanels.findIndex((p, idx) => p.index !== idx);
+  if (missingIndex !== -1) {
+    throw new Error(`panel.index 缺失或乱序（期望 index=${missingIndex}）`);
+  }
+
+  const invalidPanel = orderedPanels.find(p => !p.shotSize || !p.cameraAngle || !p.description);
+  if (invalidPanel) {
+    throw new Error('AI返回的panel字段不完整（shotSize/cameraAngle/description 不能为空）');
+  }
+
+  const invalidLengthPanel = orderedPanels.find((p) => {
+    const words = countEnglishWords(p.description);
+    return words < 10 || words > 30;
+  });
+  if (invalidLengthPanel) {
+    const words = countEnglishWords(invalidLengthPanel.description);
+    throw new Error(`panel description 词数超出范围（当前 ${words}，要求 10-30）`);
+  }
+
+  const seenViewCombos = new Set<string>();
+  for (const panel of orderedPanels) {
+    const combo = `${panel.shotSize}__${panel.cameraAngle}`;
+    if (seenViewCombos.has(combo)) {
+      throw new Error(`存在重复视角组合：${panel.shotSize}/${panel.cameraAngle}`);
+    }
+    seenViewCombos.add(combo);
+  }
+
+  const uniqueShotSizes = new Set(orderedPanels.map((p) => p.shotSize)).size;
+  const requiredShotSizeKinds = expectedPanelCount >= 6 ? 3 : 2;
+  if (uniqueShotSizes < requiredShotSizeKinds) {
+    throw new Error(`shotSize 多样性不足（当前 ${uniqueShotSizes}，至少 ${requiredShotSizeKinds}）`);
+  }
+
+  return orderedPanels;
+};
+
+const parseNineGridTranslations = (
+  responseText: string,
+  expectedPanelCount: number
+): { index: number; descriptionZh: string }[] => {
+  const cleaned = cleanJsonString(responseText);
+  const parsed = JSON.parse(cleaned);
+  const rawTranslations = Array.isArray(parsed?.translations) ? parsed.translations : [];
+
+  if (rawTranslations.length !== expectedPanelCount) {
+    throw new Error(`翻译数量异常：当前 ${rawTranslations.length}，应为 ${expectedPanelCount}`);
+  }
+
+  const seenIndexes = new Set<number>();
+  const normalized = rawTranslations.map((item: any) => {
+    const index = Number(item?.index);
+    if (!Number.isInteger(index)) {
+      throw new Error('translations.index 必须为整数');
+    }
+    if (index < 0 || index >= expectedPanelCount) {
+      throw new Error(`translations.index 超出范围（当前 ${index}，要求 0-${expectedPanelCount - 1}）`);
+    }
+    if (seenIndexes.has(index)) {
+      throw new Error(`translations.index 重复（index=${index}）`);
+    }
+    seenIndexes.add(index);
+
+    const descriptionZh = String(item?.descriptionZh || '').trim();
+    if (!descriptionZh) {
+      throw new Error(`第 ${index + 1} 格翻译为空`);
+    }
+
+    return { index, descriptionZh };
+  });
+
+  const ordered = [...normalized].sort((a, b) => a.index - b.index);
+  const missingIndex = ordered.findIndex((item, idx) => item.index !== idx);
+  if (missingIndex !== -1) {
+    throw new Error(`translations 缺失 index=${missingIndex}`);
+  }
+
+  return ordered;
+};
+
 const NINE_GRID_NO_TEXT_HARD_CONSTRAINT = `HARD RULE (HIGHEST PRIORITY):
 - This storyboard grid image must contain ZERO readable text in every panel.
 - Do NOT include letters, words, numbers, subtitles, captions, logos, watermarks, signage, UI labels, or speech bubbles.
@@ -711,74 +826,8 @@ export const generateNineGridPanels = async (
 
   const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
-  const parsePanels = (responseText: string): NineGridPanel[] => {
-    const cleaned = cleanJsonString(responseText);
-    const parsed = JSON.parse(cleaned);
-    const rawPanels = Array.isArray(parsed?.panels) ? parsed.panels : [];
-
-    if (rawPanels.length !== layout.panelCount) {
-      throw new Error(`AI返回的panel数量为 ${rawPanels.length}，必须为 ${layout.panelCount}`);
-    }
-
-    const usedIndexes = new Set<number>();
-    const normalizedPanels = rawPanels.map((p: any) => {
-      const rawIndex = Number(p?.index);
-      if (!Number.isInteger(rawIndex)) {
-        throw new Error('panel.index 必须为整数');
-      }
-      if (rawIndex < 0 || rawIndex >= layout.panelCount) {
-        throw new Error(`panel.index 超出范围（当前 ${rawIndex}，要求 0-${layout.panelCount - 1}）`);
-      }
-      if (usedIndexes.has(rawIndex)) {
-        throw new Error(`panel.index 重复（index=${rawIndex}）`);
-      }
-      usedIndexes.add(rawIndex);
-
-      return {
-        index: rawIndex,
-        shotSize: String(p?.shotSize || '').trim(),
-        cameraAngle: String(p?.cameraAngle || '').trim(),
-        description: String(p?.description || '').trim(),
-      };
-    });
-
-    const orderedPanels = [...normalizedPanels].sort((a, b) => a.index - b.index);
-    const missingIndex = orderedPanels.findIndex((p, idx) => p.index !== idx);
-    if (missingIndex !== -1) {
-      throw new Error(`panel.index 缺失或乱序（期望 index=${missingIndex}）`);
-    }
-
-    const invalidPanel = orderedPanels.find(p => !p.shotSize || !p.cameraAngle || !p.description);
-    if (invalidPanel) {
-      throw new Error('AI返回的panel字段不完整（shotSize/cameraAngle/description 不能为空）');
-    }
-
-    const invalidLengthPanel = orderedPanels.find((p) => {
-      const words = countEnglishWords(p.description);
-      return words < 10 || words > 30;
-    });
-    if (invalidLengthPanel) {
-      const words = countEnglishWords(invalidLengthPanel.description);
-      throw new Error(`panel description 词数超出范围（当前 ${words}，要求 10-30）`);
-    }
-
-    const seenViewCombos = new Set<string>();
-    for (const panel of orderedPanels) {
-      const combo = `${panel.shotSize}__${panel.cameraAngle}`;
-      if (seenViewCombos.has(combo)) {
-        throw new Error(`存在重复视角组合：${panel.shotSize}/${panel.cameraAngle}`);
-      }
-      seenViewCombos.add(combo);
-    }
-
-    const uniqueShotSizes = new Set(orderedPanels.map((p) => p.shotSize)).size;
-    const requiredShotSizeKinds = layout.panelCount >= 6 ? 3 : 2;
-    if (uniqueShotSizes < requiredShotSizeKinds) {
-      throw new Error(`shotSize 多样性不足（当前 ${uniqueShotSizes}，至少 ${requiredShotSizeKinds}）`);
-    }
-
-    return orderedPanels;
-  };
+  const parsePanels = (responseText: string): NineGridPanel[] =>
+    parseAndValidateNineGridPanels(responseText, layout.panelCount);
 
   try {
     const responseText = await retryOperation(() => chatCompletion(fullPrompt, resolvedModel, 0.7, 4096, 'json_object'));
@@ -808,6 +857,118 @@ export const generateNineGridPanels = async (
   } catch (error: any) {
     console.error(`❌ ${layout.label}分镜 - AI拆分失败:`, error);
     throw new Error(`${layout.label}视角拆分失败: ${error.message}`);
+  }
+};
+
+export interface NineGridRewriteContext {
+  actionSummary: string;
+  cameraMovement: string;
+  visualStyle: string;
+  sceneInfo?: {
+    location?: string;
+    time?: string;
+    atmosphere?: string;
+  };
+}
+
+/**
+ * 将九宫格英文描述翻译为中文展示文案（不改写原英文描述）
+ */
+export const translateNineGridPanels = async (
+  panels: NineGridPanel[],
+  model?: string
+): Promise<Array<{ index: number; descriptionZh: string }>> => {
+  if (!panels.length) return [];
+  const expectedCount = panels.length;
+  const resolvedModel = model || getActiveChatModel()?.id || 'gpt-5.2';
+
+  const prompt = `你是影视分镜翻译编辑。请将以下英文分镜描述翻译为自然、简洁的中文，仅用于界面展示。
+
+输入 JSON：
+${JSON.stringify(panels, null, 2)}
+
+输出要求（只输出JSON）：
+1) 顶层结构：{"translations":[...]}
+2) translations 数量必须为 ${expectedCount}，index 必须完整覆盖 0-${expectedCount - 1}
+3) 每项格式：{"index": number, "descriptionZh": "string"}
+4) descriptionZh 要忠实原句的主体、动作、构图与镜头意图，不添加新剧情
+5) 每条中文建议 18-42 字，语气简洁有画面感
+6) 只输出 JSON，不要解释`;
+
+  try {
+    const responseText = await retryOperation(() =>
+      chatCompletion(prompt, resolvedModel, 0.3, 2048, 'json_object')
+    );
+    return parseNineGridTranslations(responseText, expectedCount);
+  } catch (error: any) {
+    throw new Error(`九宫格翻译失败: ${error.message}`);
+  }
+};
+
+/**
+ * 按用户指令批量改写九宫格分镜文案
+ * 保持面板结构不变，输出仍为可用于生图的英文 description。
+ */
+export const reviseNineGridPanelsByInstruction = async (
+  panels: NineGridPanel[],
+  instruction: string,
+  context: NineGridRewriteContext,
+  model?: string
+): Promise<NineGridPanel[]> => {
+  const expectedCount = panels.length;
+  if (!expectedCount) return [];
+  const normalizedInstruction = String(instruction || '').trim();
+  if (!normalizedInstruction) {
+    throw new Error('改写要求不能为空');
+  }
+
+  const resolvedModel = model || getActiveChatModel()?.id || 'gpt-5.2';
+  const sceneLocation = context.sceneInfo?.location || '未指定';
+  const sceneTime = context.sceneInfo?.time || '未指定';
+  const sceneAtmosphere = context.sceneInfo?.atmosphere || '未指定';
+
+  const basePrompt = `你是电影分镜提示词编辑器。请根据用户要求改写网格分镜描述。
+
+【用户改写要求】
+${normalizedInstruction}
+
+【镜头上下文】
+动作摘要: ${context.actionSummary || '未指定'}
+镜头运动: ${context.cameraMovement || '未指定'}
+场景: 地点=${sceneLocation}，时间=${sceneTime}，氛围=${sceneAtmosphere}
+视觉风格: ${context.visualStyle || '未指定'}
+
+【当前面板 JSON】
+${JSON.stringify(panels, null, 2)}
+
+输出规则（只输出JSON）：
+1) 顶层为 {"panels":[...]}
+2) panels 必须恰好 ${expectedCount} 项，index 必须唯一且完整覆盖 0-${expectedCount - 1}
+3) 每项必须包含非空 shotSize、cameraAngle、description
+4) shotSize/cameraAngle 用简短中文；description 必须是英文单句，10-30词
+5) 在满足用户要求的同时，保持同一场景/角色连续性与镜头顺序
+6) shotSize + cameraAngle 组合不得重复，且 shotSize 至少包含 ${expectedCount >= 6 ? 3 : 2} 种
+7) 只输出 JSON，不要任何解释`;
+
+  try {
+    const responseText = await retryOperation(() =>
+      chatCompletion(basePrompt, resolvedModel, 0.6, 4096, 'json_object')
+    );
+
+    try {
+      return parseAndValidateNineGridPanels(responseText, expectedCount);
+    } catch (parseError: any) {
+      const repairPrompt = `${basePrompt}
+
+你上一次输出不符合要求（原因：${parseError.message}）。
+请严格重新输出 JSON，并保证所有规则完全满足。`;
+      const repairedText = await retryOperation(() =>
+        chatCompletion(repairPrompt, resolvedModel, 0.3, 4096, 'json_object')
+      );
+      return parseAndValidateNineGridPanels(repairedText, expectedCount);
+    }
+  } catch (error: any) {
+    throw new Error(`九宫格改写失败: ${error.message}`);
   }
 };
 

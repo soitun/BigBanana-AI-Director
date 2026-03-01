@@ -236,6 +236,7 @@ export interface NineGridPanel {
   shotSize: string;        // 景别：特写/近景/中景/全景/远景 等
   cameraAngle: string;     // 机位角度：俯拍/仰拍/平视/斜拍 等
   description: string;     // 该格子的视觉描述
+  descriptionZh?: string;  // 英文描述的中文展示翻译（可选）
 }
 
 /**

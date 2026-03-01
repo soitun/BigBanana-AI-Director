@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, RefreshCw, Check, Grid3x3, AlertCircle, Image as ImageIcon, Crop, Edit2, Save, ArrowRight, Wand2, ImagePlus } from 'lucide-react';
+import { X, Loader2, RefreshCw, Check, Grid3x3, AlertCircle, Image as ImageIcon, Crop, Edit2, Save, ArrowRight, Wand2, ImagePlus, Languages } from 'lucide-react';
 import { NineGridData, NineGridPanel, AspectRatio } from '../../types';
-import { resolveStoryboardGridLayout } from './constants';
+import { NINE_GRID, resolveStoryboardGridLayout } from './constants';
 
 interface NineGridPreviewProps {
   isOpen: boolean;
@@ -13,6 +13,10 @@ interface NineGridPreviewProps {
   onRegenerateImage: () => void; // 仅重新生成图片（保留已有的面板文案描述）
   onConfirmPanels: (panels: NineGridPanel[]) => void; // 用户确认面板后生成图片
   onUpdatePanel: (index: number, panel: Partial<NineGridPanel>) => void; // 编辑单个面板
+  onTranslatePanels?: () => Promise<void> | void; // AI翻译英文描述为中文展示（不替换英文原文）
+  onRevisePanels?: (instruction: string) => Promise<void> | void; // AI按要求改写九宫格描述
+  isTranslatingPanels?: boolean;
+  isRevisingPanels?: boolean;
   /** 当前画面比例（横屏/竖屏），用于调整预览布局 */
   aspectRatio?: AspectRatio;
 }
@@ -77,12 +81,18 @@ const NineGridPreview: React.FC<NineGridPreviewProps> = ({
   onRegenerateImage,
   onConfirmPanels,
   onUpdatePanel,
+  onTranslatePanels,
+  onRevisePanels,
+  isTranslatingPanels = false,
+  isRevisingPanels = false,
   aspectRatio = '16:9'
 }) => {
   const [hoveredPanel, setHoveredPanel] = useState<number | null>(null);
   const [selectedPanel, setSelectedPanel] = useState<number | null>(null);
   const [editingPanel, setEditingPanel] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showChineseDescriptions, setShowChineseDescriptions] = useState(false);
+  const [reviseInstruction, setReviseInstruction] = useState('');
   const [editForm, setEditForm] = useState<{ shotSize: string; cameraAngle: string; description: string }>({
     shotSize: '', cameraAngle: '', description: ''
   });
@@ -103,6 +113,13 @@ const NineGridPreview: React.FC<NineGridPreviewProps> = ({
     setValidationError(null);
   }, [isOpen, nineGrid?.status]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setShowChineseDescriptions(false);
+      setReviseInstruction('');
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const isGeneratingPanels = nineGrid?.status === 'generating_panels';
@@ -111,11 +128,14 @@ const NineGridPreview: React.FC<NineGridPreviewProps> = ({
   const hasFailed = nineGrid?.status === 'failed';
   const isCompleted = nineGrid?.status === 'completed' && nineGrid?.imageUrl;
   // 兼容旧的 generating 状态
-  const isGenerating = nineGrid?.status === 'generating_panels' || nineGrid?.status === 'generating_image' || (nineGrid?.status as string) === 'generating';
+  const isGenerating = nineGrid?.status === 'generating_panels'
+    || nineGrid?.status === 'generating_image'
+    || (nineGrid?.status as string) === 'generating';
   const gridLayout = resolveStoryboardGridLayout(nineGrid?.layout?.panelCount, nineGrid?.panels?.length);
   const gridName = gridLayout.label;
   const panelCount = gridLayout.panelCount;
   const activePanels = nineGrid?.panels?.slice(0, panelCount) || [];
+  const hasChineseDescriptions = activePanels.some((panel) => !!String(panel.descriptionZh || '').trim());
 
   const handlePanelClick = (index: number) => {
     setValidationError(null);
@@ -169,6 +189,38 @@ const NineGridPreview: React.FC<NineGridPreviewProps> = ({
     }
     setValidationError(null);
     onConfirmPanels(activePanels);
+  };
+
+  const handleTranslatePanels = async () => {
+    if (!onTranslatePanels) return;
+    setValidationError(null);
+    try {
+      await Promise.resolve(onTranslatePanels());
+      setShowChineseDescriptions(true);
+    } catch {
+      // 错误提示由父层统一展示
+    }
+  };
+
+  const handleRevisePanels = async () => {
+    if (!onRevisePanels) return;
+    if (editingPanel !== null) {
+      setValidationError('请先保存或取消当前正在编辑的面板。');
+      return;
+    }
+    const normalizedInstruction = reviseInstruction.trim();
+    if (!normalizedInstruction) {
+      setValidationError('请先输入改写要求。');
+      return;
+    }
+    setValidationError(null);
+    try {
+      await Promise.resolve(onRevisePanels(normalizedInstruction));
+      setReviseInstruction('');
+      setShowChineseDescriptions(false);
+    } catch {
+      // 错误提示由父层统一展示
+    }
   };
 
   return (
@@ -329,6 +381,55 @@ const NineGridPreview: React.FC<NineGridPreviewProps> = ({
                   </p>
                 </div>
               </div>
+              <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--bg-surface)] p-4 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleTranslatePanels}
+                    disabled={!onTranslatePanels || isTranslatingPanels || isRevisingPanels}
+                    className="px-3 py-1.5 rounded-md border border-[var(--accent-border)] bg-[var(--accent-bg)] text-[var(--accent-text)] text-[10px] font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    title="将英文描述翻译为中文展示（不替换英文原文）"
+                  >
+                    {isTranslatingPanels ? <Loader2 className="w-3 h-3 animate-spin" /> : <Languages className="w-3 h-3" />}
+                    {isTranslatingPanels ? '翻译中...' : 'AI翻译为中文'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowChineseDescriptions((prev) => !prev)}
+                    disabled={!hasChineseDescriptions}
+                    className="px-3 py-1.5 rounded-md border border-[var(--border-primary)] text-[var(--text-secondary)] text-[10px] font-bold uppercase tracking-wider hover:border-[var(--border-secondary)] disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {showChineseDescriptions ? '显示英文原文' : '显示中文译文'}
+                  </button>
+                  {!hasChineseDescriptions && (
+                    <span className="text-[10px] text-[var(--text-muted)]">
+                      尚未生成中文译文
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                    AI修改要求
+                  </label>
+                  <textarea
+                    value={reviseInstruction}
+                    onChange={(e) => setReviseInstruction(e.target.value)}
+                    placeholder="例如：加强紧张感，镜头从稳到动，前3格偏建立环境，后3格强化人物情绪。"
+                    className="w-full min-h-[84px] bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border-secondary)] rounded-md p-2 text-xs leading-relaxed focus:border-[var(--accent)] outline-none resize-y"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleRevisePanels}
+                      disabled={!onRevisePanels || isRevisingPanels || isTranslatingPanels}
+                      className="px-3.5 py-1.5 rounded-md bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] text-[10px] font-bold uppercase tracking-wider hover:bg-[var(--btn-primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    >
+                      {isRevisingPanels ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                      {isRevisingPanels ? 'AI修改中...' : 'AI按要求修改'}
+                    </button>
+                  </div>
+                </div>
+              </div>
               {validationError && (
                 <div className="px-4 py-3 bg-[var(--error-bg)] border border-[var(--error-border)] rounded-lg text-xs text-[var(--error-text)]">
                   {validationError}
@@ -380,27 +481,35 @@ const NineGridPreview: React.FC<NineGridPreviewProps> = ({
                         <div className="flex gap-2">
                           <div className="flex-1">
                             <label className="text-[8px] uppercase tracking-wider text-[var(--text-muted)] font-bold mb-0.5 block">景别</label>
-                            <select
+                            <input
+                              type="text"
                               value={editForm.shotSize}
                               onChange={(e) => setEditForm(prev => ({ ...prev, shotSize: e.target.value }))}
+                              list="nine-grid-shot-size-suggestions"
+                              placeholder="例如：中景"
                               className="w-full text-[10px] p-1.5 bg-[var(--bg-base)] border border-[var(--border-secondary)] rounded text-[var(--text-primary)] focus:border-[var(--accent)] outline-none"
-                            >
-                              {['远景', '全景', '中景', '近景', '特写', '大特写'].map(s => (
-                                <option key={s} value={s}>{s}</option>
+                            />
+                            <datalist id="nine-grid-shot-size-suggestions">
+                              {NINE_GRID.defaultShotSizes.map((size) => (
+                                <option key={size} value={size} />
                               ))}
-                            </select>
+                            </datalist>
                           </div>
                           <div className="flex-1">
                             <label className="text-[8px] uppercase tracking-wider text-[var(--text-muted)] font-bold mb-0.5 block">机位</label>
-                            <select
+                            <input
+                              type="text"
                               value={editForm.cameraAngle}
                               onChange={(e) => setEditForm(prev => ({ ...prev, cameraAngle: e.target.value }))}
+                              list="nine-grid-camera-angle-suggestions"
+                              placeholder="例如：平视"
                               className="w-full text-[10px] p-1.5 bg-[var(--bg-base)] border border-[var(--border-secondary)] rounded text-[var(--text-primary)] focus:border-[var(--accent)] outline-none"
-                            >
-                              {['俯拍', '仰拍', '平视', '斜拍', '鸟瞰', '低角度', '荷兰角', '过肩'].map(a => (
-                                <option key={a} value={a}>{a}</option>
+                            />
+                            <datalist id="nine-grid-camera-angle-suggestions">
+                              {NINE_GRID.defaultCameraAngles.map((angle) => (
+                                <option key={angle} value={angle} />
                               ))}
-                            </select>
+                            </datalist>
                           </div>
                         </div>
                         <div>
@@ -430,9 +539,16 @@ const NineGridPreview: React.FC<NineGridPreviewProps> = ({
                       </div>
                     ) : (
                       /* 预览模式 */
-                      <p className="text-[10px] text-[var(--text-tertiary)] leading-relaxed line-clamp-3">
-                        {panel.description}
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-[var(--text-tertiary)] leading-relaxed line-clamp-3">
+                          {panel.description}
+                        </p>
+                        {showChineseDescriptions && panel.descriptionZh && (
+                          <p className="text-[10px] text-[var(--accent-text)] leading-relaxed line-clamp-3 border-t border-[var(--border-primary)] pt-1">
+                            {panel.descriptionZh}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 ))}
