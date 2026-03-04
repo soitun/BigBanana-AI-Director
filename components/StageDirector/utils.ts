@@ -85,13 +85,18 @@ const normalizeVideoModelIdForRouting = (videoModel: string): string => {
   return raw;
 };
 
+const SORA_COMPATIBLE_MODELS = new Set([
+  'sora-2',
+  'doubao-seedance-1-5-pro',
+]);
+
 export const resolveVideoModelRouting = (videoModel: string): VideoModelRouting => {
   const normalizedModelId = normalizeVideoModelIdForRouting(videoModel);
   const id = normalizedModelId.toLowerCase();
 
-  if (id.startsWith('doubao-seedance')) {
+  if (SORA_COMPATIBLE_MODELS.has(id) || id.startsWith('sora')) {
     return {
-      family: 'doubao-task',
+      family: 'sora',
       normalizedModelId,
       supportsStartFrame: true,
       supportsEndFrame: false,
@@ -99,9 +104,9 @@ export const resolveVideoModelRouting = (videoModel: string): VideoModelRouting 
     };
   }
 
-  if (id === 'sora-2' || id.startsWith('sora')) {
+  if (id.startsWith('doubao-seedance')) {
     return {
-      family: 'sora',
+      family: 'doubao-task',
       normalizedModelId,
       supportsStartFrame: true,
       supportsEndFrame: false,

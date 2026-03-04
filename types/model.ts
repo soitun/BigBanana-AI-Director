@@ -484,6 +484,18 @@ export const BUILTIN_VIDEO_MODELS: VideoModelDefinition[] = [
     params: { ...DEFAULT_VIDEO_PARAMS_SORA },
   },
   {
+    id: 'doubao-seedance-1-5-pro',
+    apiModel: 'doubao-seedance-1-5-pro',
+    name: 'Doubao Seedance 1.5 Pro (AntSK)',
+    type: 'video',
+    providerId: 'antsk',
+    endpoint: '/v1/videos',
+    description: 'AntSK async video mode via /v1/videos with Sora-2-compatible request format, supporting 4/8/12 seconds.',
+    isBuiltIn: true,
+    isEnabled: true,
+    params: { ...DEFAULT_VIDEO_PARAMS_SORA },
+  },
+  {
     id: 'doubao-seedance-1-5-pro-251215',
     apiModel: 'doubao-seedance-1-5-pro-251215',
     name: 'Doubao Seedance 1.5 Pro',

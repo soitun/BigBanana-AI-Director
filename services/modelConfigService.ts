@@ -410,4 +410,5 @@ export const AVAILABLE_IMAGE_MODELS = [
 export const AVAILABLE_VIDEO_MODELS = [
   { name: 'Veo 3.1 Fast', value: 'veo_3_1-fast', type: 'sora' as const, description: '异步模式，支持横/竖屏，固定 8 秒' },
   { name: 'Sora-2', value: 'sora-2', type: 'sora' as const, description: '异步模式，支持 4/8/12 秒' },
+  { name: 'Doubao Seedance 1.5 Pro (AntSK)', value: 'doubao-seedance-1-5-pro', type: 'sora' as const, description: 'Async mode with the same request style as Sora-2, supports 4/8/12 seconds.' },
 ];
