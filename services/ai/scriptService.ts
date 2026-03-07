@@ -18,7 +18,6 @@ import { addRenderLogWithTokens } from '../renderLogService';
 import { parseDurationToSeconds } from '../durationParser';
 import {
   retryOperation,
-  cleanJsonString,
   chatCompletion,
   chatCompletionStream,
   checkApiKey,
@@ -27,6 +26,7 @@ import {
   parseHttpError,
   getActiveVideoModel,
   logScriptProgress,
+  parseJsonWithRecovery,
 } from './apiCore';
 import { getStylePrompt } from './promptConstants';
 import { generateArtDirection, generateAllCharacterPrompts, generateVisualPrompts } from './visualService';
@@ -266,7 +266,7 @@ export const inferVisualStyleFromImage = async (
 
     let parsed: any = {};
     try {
-      parsed = JSON.parse(cleanJsonString(responseText));
+      parsed = parseJsonWithRecovery(responseText, {});
     } catch {
       parsed = {};
     }
@@ -494,8 +494,7 @@ export const parseScriptStructure = async (
 
   let parsed: any = {};
   try {
-    const text = cleanJsonString(responseText);
-    parsed = JSON.parse(text);
+    parsed = parseJsonWithRecovery(responseText, {});
   } catch (e) {
     console.error("Failed to parse script structure JSON:", e);
     parsed = {};
@@ -1592,8 +1591,7 @@ export const generateShotList = async (
         2000,
         abortSignal
       );
-      const text = cleanJsonString(responseText);
-      const parsed = JSON.parse(text);
+      const parsed = parseJsonWithRecovery<any>(responseText, { shots: [] });
 
       const shots = Array.isArray(parsed)
         ? parsed
@@ -1610,6 +1608,7 @@ export const generateShotList = async (
         const repairPrompt = renderPromptTemplate(shotRepairTemplate, {
           actualShots: validShots.length,
           sceneIndex: index + 1,
+          sceneId: scene.id,
           shotsPerScene,
           sceneLocation: scene.location,
           sceneTime: scene.time,
@@ -1625,7 +1624,7 @@ export const generateShotList = async (
             2000,
             abortSignal
           );
-          const repairedParsed = JSON.parse(cleanJsonString(repairedText));
+          const repairedParsed = parseJsonWithRecovery<any>(repairedText, { shots: [] });
           const repairedShots = Array.isArray(repairedParsed?.shots) ? repairedParsed.shots : [];
           if (repairedShots.length > 0) {
             validShots = repairedShots;

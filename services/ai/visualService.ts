@@ -7,7 +7,6 @@ import { Character, Scene, Prop, AspectRatio, ArtDirection, CharacterTurnaroundP
 import { addRenderLogWithTokens } from '../renderLogService';
 import {
   retryOperation,
-  cleanJsonString,
   chatCompletion,
   checkApiKey,
   getApiBase,
@@ -15,6 +14,7 @@ import {
   resolveModel,
   logScriptProgress,
   parseHttpError,
+  parseJsonWithRecovery,
 } from './apiCore';
 import {
   getStylePrompt,
@@ -108,8 +108,7 @@ Output ONLY valid JSON with this exact structure:
       2000,
       abortSignal
     );
-    const text = cleanJsonString(responseText);
-    const parsed = JSON.parse(text);
+    const parsed = parseJsonWithRecovery<any>(responseText, {});
 
     const artDirection: ArtDirection = {
       colorPalette: {
@@ -252,8 +251,7 @@ Output ONLY the JSON, no explanations.`;
       2000,
       abortSignal
     );
-    const text = cleanJsonString(responseText);
-    const parsed = JSON.parse(text);
+    const parsed = parseJsonWithRecovery<any>(responseText, {});
 
     const results: { visualPrompt: string; negativePrompt: string }[] = [];
     const charResults = Array.isArray(parsed.characters) ? parsed.characters : [];
@@ -1354,7 +1352,7 @@ Rules:
       2000,
       abortSignal
     );
-    let parsed = JSON.parse(cleanJsonString(responseText));
+    let parsed = parseJsonWithRecovery<any>(responseText, {});
     let panels = buildPanels(parsed);
     let validationError = validatePanels(panels);
 
@@ -1373,7 +1371,7 @@ Rewrite and output JSON again with these strict rules:
         2000,
         abortSignal
       );
-      parsed = JSON.parse(cleanJsonString(repairedText));
+      parsed = parseJsonWithRecovery<any>(repairedText, {});
       panels = buildPanels(parsed);
       validationError = validatePanels(panels);
       if (validationError) {

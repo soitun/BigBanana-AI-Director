@@ -12,9 +12,9 @@ import {
 import { addRenderLogWithTokens } from '../renderLogService';
 import {
   retryOperation,
-  cleanJsonString,
   chatCompletion,
   getActiveChatModel,
+  parseJsonWithRecovery,
 } from './apiCore';
 import { getStylePromptCN, getStylePrompt } from './promptConstants';
 import { generateImage } from './visualService';
@@ -39,8 +39,7 @@ const parseAndValidateNineGridPanels = (
   responseText: string,
   expectedPanelCount: number
 ): NineGridPanel[] => {
-  const cleaned = cleanJsonString(responseText);
-  const parsed = JSON.parse(cleaned);
+  const parsed = parseJsonWithRecovery<any>(responseText, { panels: [] });
   const rawPanels = Array.isArray(parsed?.panels) ? parsed.panels : [];
 
   if (rawPanels.length !== expectedPanelCount) {
@@ -111,8 +110,7 @@ const parseNineGridTranslations = (
   responseText: string,
   expectedPanelCount: number
 ): { index: number; descriptionZh: string }[] => {
-  const cleaned = cleanJsonString(responseText);
-  const parsed = JSON.parse(cleaned);
+  const parsed = parseJsonWithRecovery<any>(responseText, { translations: [] });
   const rawTranslations = Array.isArray(parsed?.translations) ? parsed.translations : [];
 
   if (rawTranslations.length !== expectedPanelCount) {
@@ -191,8 +189,7 @@ export const optimizeBothKeyframes = async (
     const result = await retryOperation(() => chatCompletion(prompt, model, 0.7, 2048, 'json_object'));
     const duration = Date.now() - startTime;
 
-    const cleaned = cleanJsonString(result);
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJsonWithRecovery<any>(result, {});
 
     if (!parsed.startFrame || !parsed.endFrame) {
       throw new Error('AI返回的JSON格式不正确');
@@ -384,8 +381,7 @@ ${String(shot.dialogue).trim()}`
     const result = await retryOperation(() => chatCompletion(prompt, model, 0.7, 4096, 'json_object'));
     const duration = Date.now() - startTime;
 
-    const cleaned = cleanJsonString(result);
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJsonWithRecovery<any>(result, {});
 
     if (!parsed.subShots || !Array.isArray(parsed.subShots) || parsed.subShots.length === 0) {
       throw new Error('AI返回的JSON格式不正确或子镜头数组为空');

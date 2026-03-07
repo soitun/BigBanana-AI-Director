@@ -77,6 +77,9 @@ Instructions:
 7. 'characters': Return ONLY IDs from provided Characters list.
 8. 'props': Return ONLY IDs from provided Props list when a prop is visibly involved. Use [] if none.
 9. 'visualPrompt': Detailed description for image generation in {visualStyle} style (OUTPUT IN {lang}). Include style-specific keywords.{artDirectionVisualPromptConstraint} Keep it under 50 words.
+10. Every shot MUST include all required keys. Do not omit keys; use "" or [] when a value is empty.
+11. keyframes MUST contain BOTH a start frame and an end frame.
+12. Keys and string values MUST use standard JSON double quotes only.
 
 Output ONLY a valid JSON OBJECT with this exact structure (no markdown, no extra text):
 {
@@ -92,6 +95,26 @@ Output ONLY a valid JSON OBJECT with this exact structure (no markdown, no extra
       "props": ["string"],
       "keyframes": [
         {"id": "string", "type": "start|end", "visualPrompt": "string (MUST include {visualStyle} style keywords{keyframeVisualPromptConstraint})"}
+      ]
+    }
+  ]
+}
+
+JSON Example (shape reference only — replace the content, but keep the schema valid):
+{
+  "shots": [
+    {
+      "id": "scene-{sceneIndex}-shot-1",
+      "sceneId": "{sceneId}",
+      "actionSummary": "角色停在门口，短暂观察后推门进入。",
+      "dialogue": "",
+      "cameraMovement": "Slow Push In",
+      "shotSize": "Medium Shot",
+      "characters": ["char_1"],
+      "props": [],
+      "keyframes": [
+        {"id": "scene-{sceneIndex}-shot-1-start", "type": "start", "visualPrompt": "{visualStyle} style, the character pauses at the doorway, cautious posture, interior shadows, cinematic framing"},
+        {"id": "scene-{sceneIndex}-shot-1-end", "type": "end", "visualPrompt": "{visualStyle} style, the character pushes the door and steps inside, motion implied, consistent lighting, cinematic framing"}
       ]
     }
   ]
@@ -113,7 +136,29 @@ Requirements:
 4. Include fields: id, sceneId, actionSummary, dialogue, cameraMovement, shotSize, characters, props, keyframes.
 5. characters/props must be arrays of valid IDs from provided context.
 6. keyframes must include type=start/end and visualPrompt.
-7. Output ONLY valid JSON object (no markdown).`,
+7. Do not omit keys; use "" or [] when a value is empty.
+8. Keys and string values MUST use standard JSON double quotes only.
+9. Output ONLY valid JSON object (no markdown, no prose, no comments).
+
+JSON Example (shape reference only):
+{
+  "shots": [
+    {
+      "id": "scene-{sceneIndex}-shot-1",
+      "sceneId": "{sceneId}",
+      "actionSummary": "示例动作",
+      "dialogue": "",
+      "cameraMovement": "Static",
+      "shotSize": "Wide Shot",
+      "characters": [],
+      "props": [],
+      "keyframes": [
+        {"id": "scene-{sceneIndex}-shot-1-start", "type": "start", "visualPrompt": "{visualStyle} style, starting frame"},
+        {"id": "scene-{sceneIndex}-shot-1-end", "type": "end", "visualPrompt": "{visualStyle} style, ending frame"}
+      ]
+    }
+  ]
+}`,
     actionSuggestion: `你是一位专业的电影动作导演和叙事顾问。请根据提供的首帧和尾帧信息，结合镜头运动，设计一个既符合叙事逻辑又充满视觉冲击力的动作场景。
 
 ## 重要约束

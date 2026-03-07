@@ -11,6 +11,7 @@ export {
   // 以下为内部辅助，但部分场景仍可能直接使用
   retryOperation,
   cleanJsonString,
+  parseJsonWithRecovery,
   chatCompletion,
   chatCompletionStream,
   checkApiKey,
