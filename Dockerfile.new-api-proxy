@@ -1,0 +1,13 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY server/newApiProxyCore.mjs ./server/newApiProxyCore.mjs
+COPY server/newApiProxyServer.mjs ./server/newApiProxyServer.mjs
+
+ENV NEW_API_PROXY_PORT=8788
+
+EXPOSE 8788
+
+CMD ["node", "server/newApiProxyServer.mjs"]
+

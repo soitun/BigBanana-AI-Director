@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Users, Clapperboard, Film, ChevronLeft, ListTree, HelpCircle, Cpu, Sun, Moon, Loader2, FolderOpen, BookOpen, Globe, Palette } from 'lucide-react';
+import { FileText, Users, Clapperboard, Film, ChevronLeft, ListTree, HelpCircle, Cpu, Sun, Moon, Loader2, FolderOpen, BookOpen, Globe, Palette, User } from 'lucide-react';
 import logoImg from '../logo.png';
 import { useTheme } from '../contexts/ThemeContext';
 import { USER_MANUAL_URL, OFFICIAL_WEBSITE_URL, CREATIVE_HOME_URL, COPYRIGHT_TEXT } from '../constants/links';
@@ -123,6 +123,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentStage, setStage, onExit, proje
             <Cpu className="w-4 h-4" />
           </button>
         )}
+        <a
+          href="/account"
+          className="w-full flex items-center justify-between text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <span className="font-mono text-[10px] uppercase tracking-widest">账号中心</span>
+          <User className="w-4 h-4" />
+        </a>
         <div className="flex gap-3 pt-2">
           <a href={OFFICIAL_WEBSITE_URL} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent-text)] transition-colors"

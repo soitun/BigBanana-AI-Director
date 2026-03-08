@@ -8,6 +8,7 @@ services:
       - "3005:80"
     depends_on:
       - media-proxy
+      - new-api-proxy
     restart: unless-stopped
 
   media-proxy:
@@ -24,4 +25,17 @@ services:
       MEDIA_PROXY_CORS_ORIGIN: "*"
     expose:
       - "8787"
+    restart: unless-stopped
+
+  new-api-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.new-api-proxy
+    container_name: bigbanana-new-api-proxy
+    environment:
+      NEW_API_PROXY_PORT: "8788"
+      NEW_API_ALLOWED_HOSTS: ""
+      NEW_API_ALLOW_PRIVATE_HOSTS: "false"
+    expose:
+      - "8788"
     restart: unless-stopped

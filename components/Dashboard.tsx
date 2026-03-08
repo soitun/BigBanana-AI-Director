@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, Loader2, Folder, ChevronRight, Calendar, AlertTriangle, X, HelpCircle, Cpu, Archive, Search, Users, MapPin, Package, Database, Settings, Sun, Moon, Film, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Loader2, Folder, ChevronRight, Calendar, AlertTriangle, X, HelpCircle, Cpu, Archive, Search, Users, MapPin, Package, Database, Settings, Sun, Moon, Film, ExternalLink, User } from 'lucide-react';
 import { SeriesProject, AssetLibraryItem, Character, Scene, Prop, ProjectState } from '../types';
 import { getAllSeriesProjects, createNewSeriesProject, saveSeriesProject, deleteSeriesProject, createNewSeries, saveSeries, createNewEpisode, saveEpisode, getAllAssetLibraryItems, deleteAssetFromLibrary, exportIndexedDBData } from '../services/storageService';
 import { useAlert } from './GlobalAlert';
@@ -203,6 +203,13 @@ const Dashboard: React.FC<Props> = ({ onOpenProject, onShowOnboarding, onShowMod
               </button>
             )}
             <button
+              onClick={() => navigate('/account')}
+              className="group flex items-center gap-2 px-4 py-3 border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-secondary)] transition-colors"
+            >
+              <User className="w-4 h-4" />
+              <span className="font-medium text-xs tracking-widest uppercase">账号中心</span>
+            </button>
+            <button
               onClick={() => setShowSettingsModal(true)}
               className="group flex items-center gap-2 px-4 py-3 border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-secondary)] transition-colors"
             >
@@ -379,6 +386,20 @@ const Dashboard: React.FC<Props> = ({ onOpenProject, onShowOnboarding, onShowMod
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => {
+                  setShowSettingsModal(false);
+                  navigate('/account');
+                }}
+                className="p-4 border border-[var(--border-primary)] hover:border-[var(--border-secondary)] bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] transition-colors text-left"
+              >
+                <div className="flex items-center gap-2 text-[var(--text-primary)] text-sm font-bold">
+                  <User className="w-4 h-4 text-[var(--accent-text)]" />
+                  账号中心
+                </div>
+                <div className="text-[10px] text-[var(--text-tertiary)] font-mono mt-2">登录、注册、充值、令牌与日志</div>
+              </button>
+
               {onShowModelConfig && (
                 <button
                   onClick={() => {
