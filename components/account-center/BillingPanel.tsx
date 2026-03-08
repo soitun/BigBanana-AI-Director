@@ -422,7 +422,7 @@ export const BillingPanel: React.FC<BillingPanelProps> = ({
                       onClick={() => setTopupAmount(String(amount))}
                       className={`rounded-full border px-4 py-2 text-sm transition-colors ${String(amount) === topupAmount ? 'border-[var(--accent)] bg-[var(--accent-bg)] text-[var(--accent-text)]' : 'border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-[var(--border-secondary)] hover:text-[var(--text-primary)]'}`}
                     >
-                      {amount}
+                      {`${normalizeDisplayAmount(amount)}$`}
                     </button>
                   ))}
                 </div>
