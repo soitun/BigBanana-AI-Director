@@ -1,61 +1,77 @@
-Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License
+BigBanana Community License 1.0
 
 Copyright (c) 2026 BigBanana AI Director
 
-本作品采用知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议进行许可。
+An official Chinese reference translation is available in LICENSE.zh-CN.md.
+If there is any inconsistency between the English version and the Chinese translation, the English version controls.
 
-This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+This license applies to the source code and other materials in this repository unless a file states otherwise.
 
-要查看该许可协议，可访问:
-To view a copy of this license, visit:
-https://creativecommons.org/licenses/by-nc-sa/4.0/
+1. Purpose
 
-或者写信到:
-Or send a letter to:
-Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+This repository is provided under a source-available community license. It is intended for personal learning, research, evaluation, and other non-commercial uses. It is not an OSI-approved open source license.
 
----
+2. Rights Granted
 
-个人使用许可 (Personal Use License)
+Subject to the terms of this license, you may:
 
-您可以自由地:
-You are free to:
+- use, copy, and run the Software for personal, educational, research, testing, and other non-commercial purposes;
+- modify the Software and create derivative works;
+- share the original or modified Software for non-commercial purposes.
 
-- 分享 — 在任何媒介以任何形式复制、发行本作品
-  Share — copy and redistribute the material in any medium or format
+3. Conditions
 
-- 演绎 — 修改、转换或以本作品为基础进行创作
-  Adapt — remix, transform, and build upon the material
+If you use, modify, or redistribute the Software, you must:
 
-惟须遵守下列条件:
-Under the following terms:
+- keep existing copyright, attribution, and license notices;
+- include a copy of this license with any substantial portion of the Software;
+- clearly state whether you changed the Software;
+- not imply that BigBanana, AntSK, or the authors endorse you or your use.
 
-- 署名 — 您必须给出适当的署名，提供指向本许可协议的链接，同时标明是否（对原始作品）作了修改。您可以用任何合理的方式来署名，但是不得以任何方式暗示许可人为您或您的使用背书。
-  Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+4. Commercial Use Restrictions
 
-- 非商业性使用 — 您不得将本作品用于商业目的
-  NonCommercial — You may not use the material for commercial purposes
+You may not, without prior written authorization from the copyright holder:
 
-- 全局 API 保留 — 您在使用、修改、部署、分发或基于本项目进行二次开发时，必须保留本项目默认的全局 API 地址 api.antsk.cn，不得删除、替换、重定向或更换为其他接口地址，除非事先获得作者的书面授权。
-  Global API Retention — When using, modifying, deploying, distributing, or building upon this project, you must retain the project's default global API endpoint api.antsk.cn and must not remove, replace, redirect, or change it to any other interface endpoint without prior written authorization from the author.
+- use the Software in connection with commercial activity, paid services, or revenue-generating operations;
+- sell, sublicense, lease, or commercially distribute the Software or a derivative work;
+- provide the Software as a hosted service, managed service, SaaS product, OEM offering, or white-label solution for third parties;
+- use the Software internally within a business for production commercial operations.
 
-- 相同方式共享 — 如果您再混合、转换或者基于本作品进行创作，您必须基于与原先许可协议相同的许可协议分发您贡献的作品
-  ShareAlike — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original
+5. Trademarks, Brands, and Logos
 
----
+This license does not grant any right to use any project name, product name, domain name, logo, icon, visual identity, or other brand asset of BigBanana, AntSK, or the authors.
 
-商业授权 (Commercial License)
+If you distribute a modified version, you must remove or replace official brand identifiers unless you have separate written permission.
 
-如需将本项目用于商业目的，请联系作者获取商业授权:
-For commercial use, please contact the author for a commercial license:
+Brand usage is governed by the repository trademark policy and any separate written agreement.
+
+6. Hosted Services and API Endpoints
+
+This license does not grant any right to access, resell, mirror, proxy, bundle, or rely on any official hosted service, account system, quota, or API endpoint operated by the authors or their affiliates, including api.antsk.cn.
+
+Use of any official API or hosted service is governed by separate service terms, pricing, quotas, and access rules. Access may be changed, limited, or revoked separately from this license.
+
+7. Commercial Licensing
+
+Commercial rights, including commercial deployment, private deployment, OEM distribution, white-label use, brand authorization, and production support, require a separate commercial license.
+
+Commercial licensing contact:
 
 Email: antskpro@qq.com
 GitHub: https://github.com/shuyu-labs/BigBanana-AI-Director
 
----
+8. Termination
 
-免责声明 (Disclaimer)
+Your rights under this license terminate automatically if you violate its terms. If the violation is cured within 30 days after you become aware of it, the copyright holder may choose to restore your rights.
 
-本软件按"原样"提供，不提供任何形式的明示或暗示担保，包括但不限于对适销性、特定用途适用性和非侵权性的担保。在任何情况下，作者或版权持有人均不对任何索赔、损害或其他责任负责，无论是在合同诉讼、侵权行为还是其他方面，由软件或软件的使用或其他交易引起或与之相关。
+9. Disclaimer of Warranty
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+10. Limitation of Liability
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OF OR OTHER DEALINGS IN THE SOFTWARE.
+
+11. Entire License Scope
+
+This license governs copyright permission for the repository contents only. Service access, trademark usage, support obligations, and commercial permissions are outside this license unless expressly granted in a separate written agreement.

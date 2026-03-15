@@ -1,21 +1,16 @@
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: bigbanana-web
+    container_name: registry.cn-hangzhou.aliyuncs.com/tree456/bigbanana-ai-director:web-3.0.0
     ports:
       - "3005:80"
     depends_on:
       - media-proxy
       - new-api-proxy
+      - cutos-api
     restart: unless-stopped
 
   media-proxy:
-    build:
-      context: .
-      dockerfile: Dockerfile.media-proxy
-    container_name: bigbanana-media-proxy
+    container_name: registry.cn-hangzhou.aliyuncs.com/tree456/bigbanana-ai-director:media-3.0.0
     environment:
       MEDIA_PROXY_PORT: "8787"
       MEDIA_PROXY_ALLOWED_HOSTS: "volces.com"
@@ -28,14 +23,21 @@ services:
     restart: unless-stopped
 
   new-api-proxy:
-    build:
-      context: .
-      dockerfile: Dockerfile.new-api-proxy
-    container_name: bigbanana-new-api-proxy
+    container_name: registry.cn-hangzhou.aliyuncs.com/tree456/bigbanana-ai-director:newapi-3.0.0
     environment:
       NEW_API_PROXY_PORT: "8788"
       NEW_API_ALLOWED_HOSTS: ""
       NEW_API_ALLOW_PRIVATE_HOSTS: "false"
     expose:
       - "8788"
+    restart: unless-stopped
+
+
+  cutos-api:
+    container_name: registry.cn-hangzhou.aliyuncs.com/tree456/bigbanana-ai-director:cutos-3.0.0
+    environment:
+      CUTOS_API_PORT: "8789"
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+    expose:
+      - "8789"
     restart: unless-stopped
