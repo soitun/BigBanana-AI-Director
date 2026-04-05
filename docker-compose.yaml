@@ -1,6 +1,6 @@
 services:
   web:
-    image: registry.cn-hangzhou.aliyuncs.com/tree456/bigbanana-ai-director:web-3.1.3
+    image: registry.cn-hangzhou.aliyuncs.com/tree456/bigbanana-ai-director:web-3.1.4
     container_name: bigbanana-ai-director-web
     ports:
       - "3005:80"
