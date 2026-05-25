@@ -95,24 +95,21 @@ Traditional Text-to-Video models often struggle with specific camera movements a
 *   **Version Rollback**: Keep prompt edit history and restore earlier prompt versions quickly.
 *   **Cross-Stage Debugging**: When results become unstable, use this page to trace and fix upstream prompt issues directly.
 
-## Tech Stack
+## Public Release Format
 
-*   **Frontend**: React 19, Tailwind CSS (Sony Industrial Design Style)
-*   **AI Models**:
-    *   **Logic/Text**: `GPT-5.2`
-    *   **Vision**: `gemini-3-pro-image-preview`
-    *   **Video**: `veo_3_1_i2v_s_fast_fl_landscape` / `sora-2`
-    *   **Video**: `veo-3.1-fast-generate-preview`
-*   **Storage**: IndexedDB (Local browser database, privacy-focused, no backend dependency)
+*   **Delivery**: This public repository mainly provides documentation, `docker-compose.yaml`, and the deployment entry for official Docker images. Ongoing source updates are not synced here.
+*   **Runtime**: Start the full workbench through the official Docker images and use it directly in the browser, without building the frontend or assembling the runtime manually.
+*   **Model Access**: The default workflow uses AntSK API for unified text, image, and video model access.
+*   **Data Storage**: Project data is primarily stored in the local browser environment, and version upgrades are delivered through official images.
 
 ## Why Choose AntSK API?
 
 This project deeply integrates [**AntSK API Platform**](https://api.antsk.cn/), delivering exceptional value for creators:
 
 ### 🎯 Full Model Coverage
-* **Text Models**: GPT-5.2, GPT-5.1, Claude 3.5 Sonnet
-* **Vision Models**: Gemini 3 Pro, Nano Banana Pro
-* **Video Models**: Sora-2, Veo-3.1 (with keyframe interpolation)
+* **Text Models**: GPT-5.2, GPT-5.1, Claude 4.6 Sonnet
+* **Vision Models**: Nano Banana Pro, Gpt Image 2
+* **Video Models**: Sora-2, Veo-3.1, Vidu, Seedance 2.0, happyhorse, and more
 * **Unified Access**: Single API for all models, no platform switching
 
 ### 💰 Unbeatable Pricing
@@ -130,9 +127,9 @@ This project deeply integrates [**AntSK API Platform**](https://api.antsk.cn/), 
 ## ⚠️ Source Availability & “Free” Clarification (Please Read)
 
 * **How future updates are delivered**: Because of repeated plagiarism, unattributed reposting, and malicious misuse, future feature updates will be distributed only through official Docker images and will no longer be synced as public source code.
-* **What this repository is now**: This public repository remains as documentation and a historical reference snapshot. For deployment and upgrades, use `docker-compose.yaml` to pull the official images.
+* **What this repository is now**: This public repository remains as documentation, `docker-compose.yaml`, and a historical reference. For deployment and upgrades, follow the official Docker image release path.
 * **Commercial edition source access**: We still provide full source code delivery to commercial edition customers. If you need commercial cooperation or licensing, please use the contact information at the end of this document.
-* **Model usage note**: The currently runnable version still requires a capability-matched model stack, for example an LLM (such as **GPT-5.2**), an image model (such as **Nano Banana Pro**), and a video model (such as **Sora-2** / **Veo-3.1**). If you want to connect other providers or models, you can modify and adapt it yourself.
+* **Model usage note**: The publicly runnable release uses the workflow preconfigured in the official Docker images and still requires a capability-matched model stack, for example an LLM (such as **GPT-5.2**), an image model (such as **Nano Banana Pro**), and a video model (such as **Sora-2** / **Veo-3.1**). If you need other providers, a private model gateway, or deeper customization, that should be handled on top of the commercial source delivery.
 * **About our API service**: The API we provide is mainly for quick experience and integration, not as a core profit source.
 * **Freedom of choice**: If our API does not meet your expectations, you can absolutely use official OpenAI or Google services directly (even at a higher price). That is a normal and respected choice.
 * **About “always free” expectations**: If your primary criterion is long-term “must be free,” this project may not be the best fit for you.
@@ -180,15 +177,15 @@ No client download is required. Use the web version directly in your browser:
 
 ## Deployment
 
-### First-Time Deployment
+### Docker Image Deployment (Public Release)
 
 ```bash
-# 1. Clone the repository
+# 1. Get the deployment files
 git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
 cd BigBanana-AI-Director
 
-# 2. Start the services
-# Docker Compose will automatically pull the required official images on first start
+# 2. Start the official images
+# Docker Compose will automatically pull and start the required official images on first start
 docker-compose up -d
 
 # 3. Open in browser
@@ -201,10 +198,10 @@ docker-compose logs -f
 docker-compose down
 ```
 
-### Update to the latest release
+### Update official images
 
 ```bash
-# Pull the latest images and recreate containers
+# Pull the latest official images and recreate containers
 docker-compose pull
 docker-compose up -d --force-recreate
 ```
